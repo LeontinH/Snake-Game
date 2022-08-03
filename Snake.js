@@ -5,44 +5,43 @@ window.onload = function() {
   document.getElementById("startAgain").style.visibility = "hidden";
   startGame();
 };
-
+ 
 const canvasBorder = "black";
 const canvasBackground = "lightgreen";
 const snakeColour = "yellow";
 const snakeBorder = "black";
 let drawingInterval;
-let nextDirection;
+let nextDirection = 37;
+let gridSize = 20, tileSize = 20;
+let appleX = 15, appleY = 10;
+let nextX = 1, nextY = 0;
+let tailSize = 3;
+let snakeBody = [{x: 5, y: 10}, {x: 4, y: 10}, {x: 3, y: 10}];
 
 function startGame() {
   print("Game Started");
-  drawingInterval = setInterval(draw, 200);
+  drawingInterval = setInterval(play, 200);
 }
-  
-let gridSize = 20, tileSize = 20;
-let snakeX = 5, snakeY = 10;
-let appleX = 15, appleY = 10;
-let nextX = 0, nextY = 0;
-let tailSize = 1;
-let snakeBody = [];
 
-function draw() {
+function play() {
+  drawCanvas();
+  drawSnake();
+  moveSnake();
+  eatApple();
+  generateApple();
+  checkCollision();
+}
+
+function drawCanvas() {
   ctx.fillStyle = canvasBackground;
   ctx.strokestyle = canvasBorder;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.strokeRect(0, 0, canvas.width, canvas.height);
-  snakeX += nextX;
-  snakeY += nextY;
-  if ((snakeX < 0) || (snakeX > gridSize - 1) || (snakeY < 0) || (snakeY > gridSize - 1)) {
-    endGame();
-  }
-  if (snakeX == appleX && snakeY == appleY) {
-    ++tailSize;
-    appleX = Math.floor(Math.random() * gridSize);
-    appleY = Math.floor(Math.random() * tileSize);
-  }
+}
 
-  for (var i = 0; i < snakeBody.length; ++i) {
-    if (i == tailSize - 1) {
+function drawSnake() {
+  for (let i = 0; i < snakeBody.length; ++i) {
+    if (i == 0) {
       ctx.fillStyle = "black";
     } else {
       ctx.fillStyle = snakeColour;
@@ -50,18 +49,42 @@ function draw() {
     ctx.strokestyle = snakeBorder;
     ctx.fillRect(snakeBody[i].x * gridSize, snakeBody[i].y * tileSize, gridSize, tileSize);
     ctx.strokeRect(snakeBody[i].x * gridSize , snakeBody[i].y * tileSize, gridSize, tileSize);
-
-    if (snakeBody[i].x == snakeX && snakeBody[i].y == snakeY && tailSize > 1) {
-      endGame(); 
-    }
+    snakeSelfIntersection(i);
   }
+}
 
+function moveSnake() {
+  let snakeHead = {x: snakeBody[0].x + nextX, y: snakeBody[0].y + nextY};
+  snakeBody.unshift(snakeHead);
+  while (snakeBody.length > tailSize) {
+    snakeBody.pop();
+  }
+}
+
+function eatApple() {
+  if (snakeBody[0].x == appleX && snakeBody[0].y == appleY) {
+    ++tailSize;
+  }
+}
+
+function generateApple() {
+  if (snakeBody[0].x == appleX && snakeBody[0].y == appleY) {
+    appleX = Math.floor(Math.random() * gridSize);
+    appleY = Math.floor(Math.random() * tileSize);
+  }
   ctx.fillStyle = "red";
   ctx.fillRect(appleX * tileSize, appleY * tileSize, tileSize, tileSize);
+}
 
-  snakeBody.push({x: snakeX, y: snakeY});
-  while (snakeBody.length > tailSize) {
-    snakeBody.shift();
+function checkCollision() {
+  if ((snakeBody[0].x < 0) || (snakeBody[0].x > gridSize - 1) || (snakeBody[0].y < 0) || (snakeBody[0].y > gridSize - 1)) {
+    endGame();
+  }
+}
+
+function snakeSelfIntersection(i) {
+  if (snakeBody[i].x == snakeBody[0].x && snakeBody[i].y == snakeBody[0].y && i > 0) {
+    endGame(); 
   }
 }
 
@@ -85,10 +108,10 @@ function keyDownEvent(e) {
 }
 
 function endGame() {
-    clearInterval(drawingInterval);
-    print("Game Over");
-    document.getElementById("gameScoreMessage").innerHTML = "<h1>Your score: " + (tailSize - 1) + "</h1>";
-    document.getElementById("startAgain").style.visibility = "visible";
+  clearInterval(drawingInterval);
+  print("Game Over");
+  document.getElementById("gameScoreMessage").innerHTML = "<h1>Your score: " + (tailSize - 3) + "</h1>";
+  document.getElementById("startAgain").style.visibility = "visible";
 }
 
 function print(str) {
